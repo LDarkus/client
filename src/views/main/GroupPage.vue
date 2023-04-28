@@ -14,9 +14,8 @@ import InputSwitch from 'primevue/inputswitch';
 // Импорт компонента Dropdown из PrimeVue
 import Dropdown from 'primevue/dropdown';
 
-import api from '../../services/api';
 
-import { ExportFileInServer, GetGroups, UpdateStudentsInfo } from '../../services/ApiService';
+import { ExportFileInServer, GetGroups, UpdateStudentsInfo, UpdateGroupsStatus } from '../../services/ApiService';
 
 
 const toast = useToast();
@@ -54,9 +53,9 @@ const myUploader = async (event) => {
 
 
 
-
 onMounted(() => {
     GetGroups().then(res => groups.value = res)
+
 
 })
 
@@ -70,7 +69,6 @@ const showDialog = (group) => {
 
 const closeDialog = () => {
     sendUpdatedRows();
-    console.log('Updated Rows:', updatedRows.value);
     dialogVisible.value = false;
     selectedGroup.value = null;
 };
@@ -78,7 +76,6 @@ const closeDialog = () => {
 
 
 const updateSubgroup_updateCheckbox = (data, val, flag) => {
-    console.log(data);
     const index = updatedRows.value.findIndex(row => row.id === data.id);
     if (flag) {
         if (index === -1) {
@@ -110,7 +107,6 @@ const updateSubgroup_updateCheckbox = (data, val, flag) => {
 const sendUpdatedRows = async () => {
     let answer = { mes: "", status: 0 };
     if (updatedRows.value.length === 0) {
-        console.log('Массив updatedRows пуст. Отправка данных на сервер не выполнена.');
         answer.mes = "Данных для изменения не было зафиксировано"
         answer.code = 201
 
@@ -118,7 +114,6 @@ const sendUpdatedRows = async () => {
         try {
             // Сравниваем данные в массиве updatedRows с previousData
             if (JSON.stringify(updatedRows.value) === JSON.stringify(previousData)) {
-                console.log('Данные на сервер не отправляются, так как они не изменились.');
                 answer.mes = "Изменений не было зафиксировано";
                 answer.status = 201;
                 return;
@@ -140,22 +135,29 @@ const sendUpdatedRows = async () => {
             answer.code = 200
         } catch (error) {
             // Обрабатываем ошибку
-            answer.mes = "Произошла ошибка при отправке данных на сервер" , error;
+            answer.mes = "Произошла ошибка при отправке данных на сервер", error;
             answer.code = 500;
         }
     }
 
+    ShowMessage(answer.mes, answer.code);
 
-
-    if (answer.code == 200) {
-        toast.add({ severity: 'success', summary: 'Успешно!', detail: answer.mes, life: 3000 });
-    } else if (answer.code == 201) {
-        toast.add({ severity: 'warn', summary: 'Внимание!', detail: answer.mes, life: 3000 });
-    } else {
-        toast.add({ severity: 'error', summary: 'Ошибка!', detail: answer.mes, life: 6000 });
-    }
 };
 
+const ShowMessage = (message,code) => {
+    if (code == 200) {
+        toast.add({ severity: 'success', summary: 'Успешно!', detail: message, life: 3000 });
+    } else if (code == 201) {
+        toast.add({ severity: 'warn', summary: 'Внимание!', detail: message, life: 3000 });
+    } else {
+        toast.add({ severity: 'error', summary: 'Ошибка!', detail: message, life: 6000 });
+    }
+}
+
+const updataGroupStatus = async (data,val) => {
+    let resp = await UpdateGroupsStatus(data);
+    ShowMessage(resp.data, resp.status);
+}
 
 </script>
 
@@ -167,20 +169,30 @@ const sendUpdatedRows = async () => {
             :maxFileSize="1000000" :auto="true" chooseLabel="Загрузить" />
     </div>
 
-    <div class="card w-75 m-auto">
-        <DataTable :value="groups" tableStyle="min-width: 35rem">
+    <div class="card w-100 m-auto">
+        <DataTable :value="groups" :sort-field="'isActive'" :sort-order="-1" tableStyle="min-width: 40rem">
             <Column field="id" header="Code" style="width: 10%;"></Column>
-            <Column field="name" sortable header="Наименование дисциплины" style="width: 30%;"></Column>
-            <Column field="name" header="Актуальность" style="width: 20%;"></Column>
-            <Column header="Подробнее" style="width: 40%;">
+            <Column field="name" sortable header="Наименование дисциплины" style="width: 45%;"></Column>
+            <Column field="isActive" sortable header="Актуальность" style="width: 20%;"> :headerStyle="{ 'text-align': 'center' }"
+                :sortable="true" >
+                <template #body="{ data }">
+                    <div style="text-align: center;">
+                        <InputSwitch v-model="data.isActive" :true-value="1" :false-value="0"
+                            @input="val => updataGroupStatus(data, val, 0)" />
+                    </div>
+                    <span>{{ data.isActive }}</span>
+                </template>
+            </Column>
+            <Column header="Подробнее" style="width: 25%;">
                 <template #body="slotProps">
-                    <Button :label="slotProps.data.name" icon="pi pi-external-link" @click="showDialog(slotProps.data)" />
+                    <Button :disabled="slotProps.data.isActive == 0" label="Список группы" icon="pi pi-external-link" @click="showDialog(slotProps.data)" />
                 </template>
             </Column>
         </DataTable>
 
         <Dialog v-model:visible="dialogVisible" modal header="Список студентов" :style="{ width: '50rem' }">
-            <DataTable :value="selectedGroup?.students" tableStyle="min-width: 40rem">
+            <DataTable :value="selectedGroup?.students" :sort-field="'isActive'" :sort-order="-1"
+                tableStyle="min-width: 40rem">
                 <Column field="id" header="#" style="width: 10%;">
                     <template #body="{ index }">
                         {{ index + 1 }}
@@ -197,8 +209,8 @@ const sendUpdatedRows = async () => {
                         </div>
                     </template>
                 </Column>
-                <Column field="isActive" sortable header="Актуальность" style="width: 40%;"
-                    :headerStyle="{ 'text-align': 'center' }" sortField="isActive">
+                <Column field="isActive" header="Актуальность" style="width: 40%;" :headerStyle="{ 'text-align': 'center' }"
+                    :sortable="true">
                     <template #body="{ data }">
                         <div style="text-align: center;">
                             <InputSwitch v-model="data.isActive" :true-value="1" :false-value="0"
@@ -210,7 +222,6 @@ const sendUpdatedRows = async () => {
             </DataTable>
             <template #footer>
                 <Button class="mt-2" severity="success" rounded label="Сохранить" @click="closeDialog" />
-
             </template>
         </Dialog>
     </div>
@@ -219,5 +230,4 @@ const sendUpdatedRows = async () => {
 <style scoped>
 .p-datatable .p-datatable-thead th {
     text-align: center;
-}
-</style>
+}</style>

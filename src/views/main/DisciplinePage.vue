@@ -7,16 +7,22 @@ import { computed, ref, watch } from 'vue';
 import { useDialog } from 'primevue/usedialog';
 
 const dialog = useDialog();
-let date_year = ref();
 
+let date_year = ref();
 const getYearFromDate = computed(() => {
-    let y = parseInt(String(date_year.value).substring(11, 15));
-    console.log(parseInt(y));
-    if (y < 2010 || y > 2030) {
-        return null
+    console.log(date_year);
+    if (date_year.value == null) {
+        return new Date().getFullYear()
     }
-    else
-        return String(date_year.value).substring(11, 15)
+    else {
+        let y = parseInt(String(date_year.value).substring(11, 15));
+        console.log(parseInt(y));
+        if (y < 2010 || y > 2030) {
+            return null
+        }
+        else
+            return String(date_year.value).substring(11, 15)
+    }
 });
 
 
@@ -27,7 +33,7 @@ const getYearFromDate = computed(() => {
         <div class="row" style="margin-top: 150px;">
             <div class="col-2"></div>
             <div class="col-3">
-                <Calendar v-model="date_year" placeholder="Выберите год" showIcon view="year" dateFormat="yy" />
+                <Calendar v-model="date_year"  placeholder="Выберите год" showIcon view="year" dateFormat="yy" />
             </div>
             <div class="col-2"></div>
             <div class="col-5">

@@ -64,5 +64,22 @@ const UpdateStudentsInfo = async (updatedRows) => {
   }
 };
 
+const UpdateGroupsStatus = async (group) => {
+  try {
 
-export { UserRegistration, ExportFileInServer, GetGroups,UpdateStudentsInfo };
+    const response = await api.put(
+      `api/auth/groups/${group.id}/updateGroupStatus`,
+      {
+        direction_id: group.direction_id,
+        name: group.name,
+        isActive: group.isActive,
+      }
+    );
+
+    return response
+  } catch (error) {
+    console.log("При отправке измененных данных произошла ошибка:", error);
+  }
+}
+
+export { UserRegistration, ExportFileInServer, GetGroups,UpdateStudentsInfo, UpdateGroupsStatus };

@@ -6,7 +6,11 @@ import { computed, ref } from "vue";
 import axios from "axios";
 import { UserRegistration } from "../services/ApiService"
 import router from "../router";
+import Toast from 'primevue/toast';
+import { useToast } from "primevue/usetoast";
+const toast = useToast();
 axios.defaults.baseURL = "http://localhost:80"
+
 
 
 const emailField = ref("")
@@ -26,17 +30,14 @@ const rules = computed(() => ({
         required: helpers.withMessage("Поле должно быть заполненно", required),
 
     },
-    passwordField : {
+    passwordField: {
         minLength: helpers.withMessage("Длина пароля должна быть больше 6 символов", minLength(6)),
         required: helpers.withMessage("Поле должно быть заполненно", required),
-
     }
-
-
 }))
 
 const rules_1 = computed(() => ({
-    
+
     regEmailField: {
         email: helpers.withMessage("Некоретно введен email", email),
         required: helpers.withMessage("Поле должно быть заполненно", required),
@@ -65,14 +66,14 @@ const vv = useVuelidate(rules_1, { nameField, regPasswordField, regEmailField, c
 
 const login = () => {
     v.value.$touch()
-    
+
     if (!v.value.$error) {
         console.log("im doing");
         axios.post("api/auth/login", { email: emailField.value, password: passwordField.value })
             .then(res => {
                 localStorage.setItem("access_token", res.data.access_token);
                 router.push({ name: "home" })
-            }).catch((error) => { console.log("Я ошибка"); authorizationFlag.value = true })
+            }).catch((error) => errorMessage(error))
     }
 }
 
@@ -80,7 +81,7 @@ const registration = async () => {
     vv.value.$touch()
     let FIO = nameField.value.split(" ");
     if (!vv.value.$error) {
-         const res = await UserRegistration({
+        const res = await UserRegistration({
             name: FIO[1],
             second_name: FIO[0],
             last_name: FIO[2],
@@ -104,6 +105,12 @@ const changePage = () => {
     vv.value.$reset();
     authorizationFlag.value = false;
 }
+
+const errorMessage = (error) => {
+    console.log(error.response.data.error);
+    toast.add({ severity: 'error', summary: 'Ошибка авторизации!', detail: ` ${error ? error.response.data.error : "Нераспознанная ошибка"}`, life: 3150 });
+}
+
 </script>
 
 
@@ -135,7 +142,7 @@ const changePage = () => {
                 <my-input name="password" placeholder="Введите пароль" label="Пароль" v-model:value="v.passwordField.$model"
                     :error="v.passwordField.$errors" type="password" />
 
-                <label class="labelEror" v-if="authorizationFlag">Не верный логин или пароль</label>
+                <Toast></Toast>
                 <a href="#">Забыли пароль?</a>
                 <button>Войти</button>
             </form>
@@ -381,7 +388,7 @@ form {
     width: 40px;
 }
 
-.labelEror{
+.labelEror {
     background-color: #FF647C;
     border-radius: 7px;
     padding: 10px;
