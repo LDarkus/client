@@ -24,7 +24,7 @@ const file = ref(null);
 // const visible = ref(false);
 const groups = ref();
 
-const dialogVisible = ref(false);
+const showModal = ref(false);
 const selectedGroup = ref(null);
 const updatedRows = ref([]);
 
@@ -36,7 +36,8 @@ const myUploader = async (event) => {
     //Метод для вывода сообщения
     try {
         let mes = await ExportFileInServer(event)
-        await GetGroups().then(res => groups.value = res)
+        console.log(mes);
+        GetGroups().then(res => groups.value = res)
 
         if (mes.status == 200) {
             toast.add({ severity: 'success', summary: 'Успешно!', detail: mes.data, life: 3000 });
@@ -63,13 +64,13 @@ onMounted(() => {
 
 
 const showDialog = (group) => {
-    dialogVisible.value = true;
+    showModal.value = true;
     selectedGroup.value = group;
 };
 
 const closeDialog = () => {
     sendUpdatedRows();
-    dialogVisible.value = false;
+    showModal.value = false;
     selectedGroup.value = null;
 };
 
@@ -190,7 +191,7 @@ const updataGroupStatus = async (data,val) => {
             </Column>
         </DataTable>
 
-        <Dialog v-model:visible="dialogVisible" modal header="Список студентов" :style="{ width: '50rem' }">
+        <Dialog v-model:visible="showModal" modal header="Список студентов" :style="{ width: '50rem' }">
             <DataTable :value="selectedGroup?.students" :sort-field="'isActive'" :sort-order="-1"
                 tableStyle="min-width: 40rem">
                 <Column field="id" header="#" style="width: 10%;">
@@ -221,7 +222,7 @@ const updataGroupStatus = async (data,val) => {
                 </Column>
             </DataTable>
             <template #footer>
-                <Button class="mt-2" severity="success" rounded label="Сохранить" @click="closeDialog" />
+                <Button class="mt-2" severity="success"  label="Сохранить" @click="closeDialog" />
             </template>
         </Dialog>
     </div>

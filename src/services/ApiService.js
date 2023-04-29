@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "./api";
 
 const UserRegistration = async ({
@@ -8,7 +9,6 @@ const UserRegistration = async ({
   password,
   password_confirm,
 }) => {
-  let r = "1";
   axios
     .post("/api/users/registration", {
       name: name,
@@ -25,6 +25,7 @@ const UserRegistration = async ({
     });
 };
 
+//Методя для экспорта файла со списком студентов на сервер
 const ExportFileInServer = async (event) => {
   let file = event.files[0];
   let formData = new FormData();
@@ -42,6 +43,7 @@ const ExportFileInServer = async (event) => {
   }
 };
 
+//Метод получения списка групп
 const GetGroups = async () => {
   try {
     const response = await api.get("api/auth/groups");
@@ -52,6 +54,7 @@ const GetGroups = async () => {
   }
 };
 
+//метож для обновления информации студентов
 const UpdateStudentsInfo = async (updatedRows) => {
   try {
     const groupId = updatedRows.value[0].group_id;
@@ -64,9 +67,9 @@ const UpdateStudentsInfo = async (updatedRows) => {
   }
 };
 
+//Метод для обновления статуса группы
 const UpdateGroupsStatus = async (group) => {
   try {
-
     const response = await api.put(
       `api/auth/groups/${group.id}/updateGroupStatus`,
       {
@@ -76,10 +79,43 @@ const UpdateGroupsStatus = async (group) => {
       }
     );
 
-    return response
+    return response;
   } catch (error) {
     console.log("При отправке измененных данных произошла ошибка:", error);
   }
-}
+};
 
-export { UserRegistration, ExportFileInServer, GetGroups,UpdateStudentsInfo, UpdateGroupsStatus };
+const GetDirections = async () => {
+  try {
+    const response = await api.get("api/auth/disciplines");
+    return response.data.directions;
+  } catch (error) {
+    console.log("При получении данных произошла ошибка:", error);
+  }
+};
+
+const CreateDiscipline = async (name, groups, year, semester, type) => {
+  try {
+    const response = await api.post("api/auth/disciplines", {
+      name: name,
+      groups: groups,
+      year: year,
+      semester: semester,
+      type: type,
+    });
+    console.log(response);
+    return response;
+  } catch (error) {
+    console.log("При получении данных произошла ошибка:", error);
+  }
+
+};
+export {
+  UserRegistration,
+  ExportFileInServer,
+  GetGroups,
+  UpdateStudentsInfo,
+  UpdateGroupsStatus,
+  GetDirections,
+  CreateDiscipline,
+};
