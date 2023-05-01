@@ -145,7 +145,7 @@ const sendUpdatedRows = async () => {
 
 };
 
-const ShowMessage = (message,code) => {
+const ShowMessage = (message, code) => {
     if (code == 200) {
         toast.add({ severity: 'success', summary: 'Успешно!', detail: message, life: 3000 });
     } else if (code == 201) {
@@ -155,7 +155,7 @@ const ShowMessage = (message,code) => {
     }
 }
 
-const updataGroupStatus = async (data,val) => {
+const updataGroupStatus = async (data, val) => {
     let resp = await UpdateGroupsStatus(data);
     ShowMessage(resp.data, resp.status);
 }
@@ -164,7 +164,7 @@ const updataGroupStatus = async (data,val) => {
 
 <template>
     <div class="h3">Список групп студентов</div>
-    <div class="card flex justify-content-center">
+    <div class="card flex justify-content-end">
         <Toast />
         <FileUpload mode="basic" :name="file" :customUpload="true" @uploader="myUploader" accept=".docx"
             :maxFileSize="1000000" :auto="true" chooseLabel="Загрузить" />
@@ -173,8 +173,9 @@ const updataGroupStatus = async (data,val) => {
     <div class="card w-100 m-auto">
         <DataTable :value="groups" :sort-field="'isActive'" :sort-order="-1" tableStyle="min-width: 40rem">
             <Column field="id" header="Code" style="width: 10%;"></Column>
-            <Column field="name" sortable header="Наименование дисциплины" style="width: 45%;"></Column>
-            <Column field="isActive" sortable header="Актуальность" style="width: 20%;"> :headerStyle="{ 'text-align': 'center' }"
+            <Column field="name" sortable header="Наименование группы" style="width: 45%;"></Column>
+            <Column field="isActive" sortable header="Актуальность" style="width: 20%;"> :headerStyle="{ 'text-align':
+                'center' }"
                 :sortable="true" >
                 <template #body="{ data }">
                     <div style="text-align: center;">
@@ -186,7 +187,8 @@ const updataGroupStatus = async (data,val) => {
             </Column>
             <Column header="Подробнее" style="width: 25%;">
                 <template #body="slotProps">
-                    <Button :disabled="slotProps.data.isActive == 0" label="Список группы" icon="pi pi-external-link" @click="showDialog(slotProps.data)" />
+                    <Button :disabled="slotProps.data.isActive == 0" label="Список группы" icon="pi pi-external-link"
+                        @click="showDialog(slotProps.data)" />
                 </template>
             </Column>
         </DataTable>
@@ -222,13 +224,12 @@ const updataGroupStatus = async (data,val) => {
                 </Column>
             </DataTable>
             <template #footer>
-                <Button class="mt-2" severity="success"  label="Сохранить" @click="closeDialog" />
+                <Button class="mt-2" severity="success" label="Сохранить" @click="closeDialog" />
             </template>
         </Dialog>
     </div>
 </template>
 
-<style scoped>
-.p-datatable .p-datatable-thead th {
+<style scoped>.p-datatable .p-datatable-thead th {
     text-align: center;
 }</style>

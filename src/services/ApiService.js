@@ -87,7 +87,7 @@ const UpdateGroupsStatus = async (group) => {
 
 const GetDirections = async () => {
   try {
-    const response = await api.get("api/auth/disciplines");
+    const response = await api.get("api/auth/directions");
     return response.data.directions;
   } catch (error) {
     console.log("При получении данных произошла ошибка:", error);
@@ -110,6 +110,15 @@ const CreateDiscipline = async (name, groups, year, semester, type) => {
   }
 
 };
+
+const GetDisciplines = async () => {
+  try {
+    const response = await api.get("api/auth/disciplines");
+    return response.data.disciplines;
+  } catch (error) {
+    console.log("При получении данных произошла ошибка:", error);
+  }
+};
 export {
   UserRegistration,
   ExportFileInServer,
@@ -118,4 +127,5 @@ export {
   UpdateGroupsStatus,
   GetDirections,
   CreateDiscipline,
+  GetDisciplines,
 };
