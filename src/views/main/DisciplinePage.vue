@@ -3,7 +3,6 @@ import Calendar from 'primevue/calendar';
 import Dialog from 'primevue/dialog';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import Toast from 'primevue/toast';
 import { useToast } from "primevue/usetoast";
 import Button from 'primevue/button';
 import DynamicDialog from 'primevue/dynamicdialog';
@@ -11,12 +10,15 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { useDialog } from 'primevue/usedialog';
 import MyInput from '../../components/MyInput.vue';
 import { GetDirections, CreateDiscipline, GetDisciplines } from '../../services/ApiService';
+import Toast from 'primevue/toast';
 
 //Нужно для модального окна 
 import Dropdown from 'primevue/dropdown';
 import MultiSelect from 'primevue/multiselect';
 import InputText from 'primevue/inputtext';
 
+import { useVuelidate } from '@vuelidate/core'
+import { required, email, helpers, minLength, sameAs } from '@vuelidate/validators'
 
 const disciplinesList = ref([
     { name: 'ТРПК' },
@@ -33,15 +35,15 @@ const directions = ref();
 
 const disciplines = ref();
 
-// ---------------------------------------- сделать динамеское изменение используя watch слушать нужно будет направление
+
 
 const toast = useToast();
 const showModal = ref();
-const disciplineName = ref();
-const disciplineYear = ref();
-const disciplineSemester = ref();
-const disciplineType = ref();
-const disciplineGroups = ref();
+const disciplineName = ref(null);
+const disciplineYear = ref(null);
+const disciplineSemester = ref(null);
+const disciplineType = ref(null);
+const disciplineGroups = ref([]);
 
 const disciplineSearche = ref("");
 const yearSearche = ref("");
@@ -52,6 +54,8 @@ const disciplineTypes = [
     { name: "Лекция, практика", key: 2 },
     { name: "Лекция", key: 3 },
 ];
+
+
 
 const year = computed(() => {
     if (disciplineYear.value == null) {
@@ -95,14 +99,30 @@ const closeDialog = () => {
 }
 
 const createDiscipline = async () => {
-    const resp = await CreateDiscipline(
-        disciplineName.value.name,
-        disciplineGroups.value,
-        year.value,
-        disciplineSemester.value,
-        disciplineType.value.key);
 
-    console.log(resp);
+    let is_valid = Boolean(disciplineName.value
+        && disciplineType.value
+        && disciplineGroups.value
+        && disciplineSemester.value
+        && disciplineYear.value);
+    
+    if (is_valid) {
+        const resp = await CreateDiscipline(
+            disciplineName.value.name,
+            disciplineGroups.value,
+            year.value,
+            disciplineSemester.value,
+            disciplineType.value.key);
+
+        ShowMessage(resp.data.message, resp.status)
+        showModal.value = false;
+        GetDisciplines().then(res => { disciplines.value = res.data.disciplines})
+    }
+    else {
+        ShowMessage("Не все поля были заполнены");
+    }
+
+
 
 }
 
@@ -123,15 +143,34 @@ const sortedDisciplines = computed(() => {
         });
 })
 
+const isDigit = (event)=> {
+    const charCode = (event.which) ? event.which : event.keyCode;
+    if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+        event.preventDefault();
+    }
+}
+
 onMounted(() => {
     GetDirections().then(res => directions.value = res)
-    GetDisciplines().then(res => { disciplines.value = res; console.log(disciplines.value); })
+    GetDisciplines().then(res => { disciplines.value = res.data.disciplines; if (res.status == 201) ShowMessage(res.data.message, 201); })
 
 })
 const test = () => console.log(disciplineName.value.name);
+
+const ShowMessage = (message, code) => {
+    if (code == 200) {
+        toast.add({ severity: 'success', summary: 'Успешно!', detail: message, life: 3000 });
+    } else if (code == 201 || code == 208) {
+        toast.add({ severity: 'warn', summary: 'Внимание!', detail: message, life: 3000 });
+    } else {
+        toast.add({ severity: 'error', summary: 'Ошибка!', detail: message, life: 6000 });
+    }
+}
+
 </script>
 
 <template>
+    <Toast />
     <div class="container">
 
 
@@ -155,7 +194,7 @@ const test = () => console.log(disciplineName.value.name);
             <div class="col-3">
                 <div class="p-input-icon-left ">
                     <i class="pi pi-search" />
-                    <InputText v-model="yearSearche" style="width: 10rem; " placeholder="Поиск по году" />
+                    <InputText v-model="yearSearche" style="width: 10rem; " placeholder="Поиск по году" @keydown="isDigit" />
                 </div>
             </div>
 
@@ -168,28 +207,21 @@ const test = () => console.log(disciplineName.value.name);
 
 
 
-        <DataTable :value="sortedDisciplines" class="mt-3" scrollable scrollHeight="400px" tableStyle="min-width: 40rem">
+        <DataTable :value="sortedDisciplines" class="mt-3" scrollable scrollHeight="400px" tableStyle="min-width: 40rem;">
             <Column field="discipline.name" sortable header="Наименование дисциплины"
-                style="width: 35%; font-weight: 700 ;"></Column>
-            <Column field="year" sortable header="Учебный год" style="width: 10%;"></Column>
-            <Column field="semester" sortable header="Семестр" style="width: 10%;"></Column>
-            <Column field="discipline_groups" header="Прикрепленный группы" style="width: 30%;">
+                style="width: 40%; font-weight: 700 ;"></Column>
+            <Column field="year" sortable header="Учебный год"  style="width: 10%;"></Column>
+            <Column field="semester" sortable header="Семестр"  style="width: 10%;"></Column>
+            <Column field="discipline_groups" header="Прикрепленный группы" style="width: 20%;">
                 <template #body="{ data }">
-                    <div v-for="item in data.discipline_groups" :key="item.id">
+                    <div v-for="item in data.discipline_groups"  :key="item.id">
                         {{ item.group.name }}
                     </div>
                 </template>
             </Column>
-            <Column field="semester" header="Подробнее" style="width: 15%;"></Column>
+            <Column field="semester" header="Подробнее" style="width: 20%;"></Column>
 
         </DataTable>
-
-
-
-
-
-
-
 
 
         <div>
@@ -204,6 +236,7 @@ const test = () => console.log(disciplineName.value.name);
                             <Dropdown v-model="disciplineName" inputId="dd-city" :options="disciplinesList"
                                 optionLabel="name" placeholder="Выберите дисциплину" class="w-full md:w-14rem" />
                             <label for="dd-city">дисциплина</label>
+
                         </div>
                     </div>
                     <div class="col-6">
@@ -219,7 +252,8 @@ const test = () => console.log(disciplineName.value.name);
                     <div class="col-6">
                         <div class="p-float-label " :style="{ minWidth: '100px' }">
                             <Calendar v-model="disciplineYear" placeholder="Выберите год" showIcon view="year"
-                                dateFormat="yy" />
+                                dateFormat="yy" input-id="calendarYear" />
+                            <label for="calendarYear">Учебный год</label>
                         </div>
                     </div>
                     <div class="col-6">
@@ -242,6 +276,7 @@ const test = () => console.log(disciplineName.value.name);
                             <Dropdown v-model="disciplineSemester" inputId="dd-city" :options="[1, 2]"
                                 placeholder="Выберите семестр" class="w-full md:w-14rem" />
                             <label for="dd-city">Семестр</label>
+
                         </div>
                     </div>
                     <div class="col-6">

@@ -114,7 +114,9 @@ const CreateDiscipline = async (name, groups, year, semester, type) => {
 const GetDisciplines = async () => {
   try {
     const response = await api.get("api/auth/disciplines");
-    return response.data.disciplines;
+    console.log(response);
+    return response;
+    
   } catch (error) {
     console.log("При получении данных произошла ошибка:", error);
   }
